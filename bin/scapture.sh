@@ -15,4 +15,8 @@ echo "$FILENAME"
 date
 echo $NSECONDS
 
-/usr/sbin/screencapture -D 2 -V $NSECONDS -x -a "$FILENAME"
+#Main Display
+/usr/sbin/screencapture -m -V $NSECONDS -x -a "$FILENAME"
+
+#Secondary Display
+#/usr/sbin/screencapture -D 2 -V $NSECONDS -x -a "$FILENAME"
