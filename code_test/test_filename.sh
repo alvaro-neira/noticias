@@ -1,7 +1,5 @@
 #!/bin/sh
 
-NSECONDS=3540
-
 THEYEAR=$(date '+%Y')
 THEMONTH=$(date '+%m')
 THEMONTH=${THEMONTH#0}
@@ -22,10 +20,4 @@ echo ""
 echo "filename:"
 echo "$FILENAME"
 date
-echo $NSECONDS
 
-#Main Display
-/usr/sbin/screencapture -m -V $NSECONDS -x -a "$FILENAME"
-
-#Secondary Display
-#/usr/sbin/screencapture -D 2 -V $NSECONDS -x -a "$FILENAME"
