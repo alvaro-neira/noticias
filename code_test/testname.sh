@@ -22,11 +22,3 @@ fi
 FILENAME="${FILENAME}_${THEYEAR}_${THEMONTH}_${THEDAY}_${THEHOUR}.mov"
 echo "$FILENAME"
 date
-
-echo "$NSECONDS"
-
-#Main Display
-/usr/sbin/screencapture -m -V $NSECONDS -x -a "$FILENAME"
-
-#Secondary Display
-#/usr/sbin/screencapture -D 2 -V $NSECONDS -x -a "$FILENAME"
