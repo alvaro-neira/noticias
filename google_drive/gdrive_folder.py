@@ -2,8 +2,8 @@ import json
 import os
 from json import JSONDecodeError
 
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 
 
 class GDriveFolder:
