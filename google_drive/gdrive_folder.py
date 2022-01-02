@@ -72,7 +72,10 @@ class GDriveFolder:
                 return file['id']
         return None
 
-    def download_by_name(self, name_string):
+    def download_by_name(self, name_string, path):
+        if not os.path.isdir(path):
+            print(f"'{path}' does not exist or not a folder")
+            return
         file_list = self.google_drive.ListFile({'q': "'" + self.folder_id + "' in parents and trashed=false"}).GetList()
         file_id = self.get_by_title(file_list, name_string)
         if file_id is None:
@@ -80,6 +83,10 @@ class GDriveFolder:
             return
         file_to_download = self.google_drive.CreateFile({'id': file_id})
         file_to_download.GetContentFile(file_to_download['title'])
+        path_slash = path.strip()
+        if path_slash[-1:] != "/":
+            path_slash = path_slash + "/"
+        os.rename(file_to_download['title'], path_slash + file_to_download['title'])
 
     def display_gdrive_folder(self):
         print("Folder ID: ", self.folder_id)
