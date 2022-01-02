@@ -65,5 +65,21 @@ class GDriveFolder:
             return 'video/mp4'
         return None
 
+    @staticmethod
+    def get_by_title(file_list, file_title):
+        for file in file_list:
+            if file['title'] == file_title:
+                return file['id']
+        return None
+
+    def download_by_name(self, name_string):
+        file_list = self.google_drive.ListFile({'q': "'" + self.folder_id + "' in parents and trashed=false"}).GetList()
+        file_id = self.get_by_title(file_list, name_string)
+        if file_id is None:
+            print(f"'{name_string}' not found")
+            return
+        file_to_download = self.google_drive.CreateFile({'id': file_id})
+        file_to_download.GetContentFile(file_to_download['title'])
+
     def display_gdrive_folder(self):
         print("Folder ID: ", self.folder_id)
