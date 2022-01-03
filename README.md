@@ -22,3 +22,5 @@
 ~~~bash
 % touch google_drive/gdrive_folder.json
 ~~~
+
+* Add the project path to PYTHONPATH in /etc/profile
