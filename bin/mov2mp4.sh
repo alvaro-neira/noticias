@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export PYTHONPATH="${PYTHONPATH}:/Users/aneira/noticias/"
 THEPATH="/Users/aneira/Desktop"
 FFMPEG="/opt/homebrew/Cellar/ffmpeg/4.4.1_3/bin/ffmpeg"
 
@@ -23,7 +24,10 @@ for FILE in "$THEPATH"/*.mov; do
   echo "$extension"
   echo ""
   cd $THEPATH
-  ${FFMPEG} -noautorotate -i "$prefilename.$extension" -vf scale=640:360:flags=neighbor -y "$prefilename.mp4" && rm "$prefilename.$extension"
+  ${FFMPEG} -noautorotate -i "$prefilename.$extension" -vf scale=640:360:flags=neighbor -y "$prefilename.mp4" && \
+  rm "$prefilename.$extension" && \
+  /Users/aneira/noticias/bin/upload.py "$THEPATH/$prefilename.mp4" && \
+  rm -f "$prefilename.mp4"
   echo "done with file $prefilename.$extension"
   exit 0
 done
