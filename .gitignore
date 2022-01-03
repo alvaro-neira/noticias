@@ -3,4 +3,6 @@ node_modules
 *.json
 __pycache__
 *.csv
+frame_*.png
+.DS_Store
 
