@@ -1,0 +1,6 @@
+[submodule "hyperface"]
+	path = hyperface
+	url = https://github.com/takiyu/hyperface.git
+[submodule "Gender-and-Age-Detection"]
+	path = Gender-and-Age-Detection
+	url = https://github.com/smahesh29/Gender-and-Age-Detection.git
