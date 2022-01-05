@@ -2,16 +2,14 @@
 
 export PYTHONPATH="${PYTHONPATH}:/Users/aneira/noticias/"
 THEPATH="/Users/aneira/Desktop"
-FFMPEG="/opt/homebrew/Cellar/ffmpeg/4.4.1_3/bin/ffmpeg"
+FFMPEG="/usr/local/bin/ffmpeg"
 
 number=$(ps aux | grep -v grep | grep -ci ffmpeg)
 
-if [ "$number" -gt 0 ]
-    then
-        echo "ffmpeg already running";
-        exit 1;
+if [ "$number" -gt 0 ]; then
+  echo "ffmpeg already running"
+  exit 1
 fi
-
 
 echo $THEPATH
 for FILE in "$THEPATH"/*.mov; do

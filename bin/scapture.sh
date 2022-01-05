@@ -29,3 +29,6 @@ echo $NSECONDS
 
 #Secondary Display
 #/usr/sbin/screencapture -D 2 -V $NSECONDS -x -a "$FILENAME"
+
+#/usr/sbin/screencapture -R "0,60,1920,1080" -m -V $NSECONDS -x -a $FILENAME
+

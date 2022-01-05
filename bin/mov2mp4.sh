@@ -1,8 +1,9 @@
+
+
 #!/bin/sh
 
-export PYTHONPATH="${PYTHONPATH}:/Users/aneira/noticias/"
 THEPATH="/Users/aneira/Desktop"
-FFMPEG="/opt/homebrew/Cellar/ffmpeg/4.4.1_3/bin/ffmpeg"
+FFMPEG="/usr/local/bin/ffmpeg"
 
 number=$(ps aux | grep -v grep | grep -ci ffmpeg)
 
@@ -24,10 +25,9 @@ for FILE in "$THEPATH"/*.mov; do
   echo "$extension"
   echo ""
   cd $THEPATH
-  ${FFMPEG} -noautorotate -i "$prefilename.$extension" -vf scale=640:360:flags=neighbor -y "$prefilename.mp4" && \
-  rm "$prefilename.$extension" && \
-  /Users/aneira/noticias/bin/upload.py "$THEPATH/$prefilename.mp4" && \
-  rm -f "$prefilename.mp4"
+#  ${FFMPEG} -i "$prefilename.$extension" -s 640x400 -sws_flags neighbor -y "$prefilename.mp4" && rm "$prefilename.$extension"
+  ${FFMPEG} -noautorotate -i "$prefilename.$extension" -vf scale=640:400:flags=neighbor -y uncropped.mp4 && ${FFMPEG} -noautorotate -i uncropped.mp4 -filter:v "crop=640:360:0:20" -c:a copy -y "$prefilename.mp4" && rm "$prefilename.$extension" && rm uncropped.mp4
   echo "done with file $prefilename.$extension"
   exit 0
 done
+
