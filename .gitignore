@@ -4,5 +4,6 @@ node_modules
 __pycache__
 *.csv
 frame_*.png
+tv24horas_*.mp4
 .DS_Store
 
