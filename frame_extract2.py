@@ -1,4 +1,4 @@
-# Took 3:40 minutes, 1 frame per second, 1-hour video, without display the video. 3540 frames.
+# Took 3:40 minutes, 1 frame per second, 1-hour video, without displaying the video. 3540 frames.
 
 from imutils.video import FileVideoStream
 from imutils.video import FPS
