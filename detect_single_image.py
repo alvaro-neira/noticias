@@ -15,6 +15,12 @@ basename = os.path.basename(img_path)
 file_name, _ = os.path.splitext(basename)
 
 
+def save_blob(blob_local, full_path_png):
+    blob_to_save = blob_local.reshape(blob_local.shape[2] * blob_local.shape[1], blob_local.shape[3], 1)
+    print(blob_to_save.shape)
+    cv2.imwrite(full_path_png, blob_to_save, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+
+
 def highlight_face(face_net, the_frame, conf_threshold=hyperparameters['conf_threshold']):
     """
     This function is used only to detect faces (not gender)
@@ -22,8 +28,8 @@ def highlight_face(face_net, the_frame, conf_threshold=hyperparameters['conf_thr
     frame_with_drown_squares = the_frame.copy()
     frame_height = frame_with_drown_squares.shape[0]
     frame_width = frame_with_drown_squares.shape[1]
+    # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
     blob_local = cv2.dnn.blobFromImage(frame_with_drown_squares, 1.0, (300, 300), [104, 117, 123], True, False)
-    cv2.imwrite(f'/Users/aneira/noticias/data/{file_name}_blob.png', blob_local, [cv2.IMWRITE_PNG_COMPRESSION, 0])
     face_net.setInput(blob_local)
     detections = face_net.forward()
     face_boxes_to_return = []
@@ -36,6 +42,8 @@ def highlight_face(face_net, the_frame, conf_threshold=hyperparameters['conf_thr
             y2 = int(detections[0, 0, i, 6] * frame_height)
             face_boxes_to_return.append([x1, y1, x2, y2])
             cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0), int(round(frame_height / 150)), 8)
+    with open("/Users/aneira/noticias/Gender-and-Age-Detection/face_net.dumped", "w") as text_file:
+        text_file.write(face_net.dump())
     return frame_with_drown_squares, face_boxes_to_return
 
 
@@ -51,8 +59,6 @@ frame = cv2.imread(img_path)
 resultImg, face_boxes = highlight_face(faceNet, frame)
 if not face_boxes:
     print("No face detected")
-
-
 
 for faceBox in face_boxes:
     face = frame[max(0, faceBox[1] - padding):
