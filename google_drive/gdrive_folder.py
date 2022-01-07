@@ -7,7 +7,6 @@ from pydrive2.drive import GoogleDrive
 
 
 class GDriveFolder:
-    """A comment"""
     folder_id = None
     google_drive = None
     base_path = '/Users/aneira/noticias'
