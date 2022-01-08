@@ -11,8 +11,6 @@ import json
 data_path = '/Users/aneira/noticias/data/'
 gaa = GenderAndAge('/Users/aneira/noticias/Gender-and-Age-Detection')
 
-json_data = {}
-
 
 def process_video(full_folder, video_name):
     fvs = FileVideoStream(full_folder + video_name).start()
@@ -32,10 +30,10 @@ def process_video(full_folder, video_name):
                 qty_dict[key_str] = 1
         count = count + 1
     print(f"total count={count}")
-    json_data[video_name] = qty_dict
-    json_data[video_name]['frames_total'] = count
+    qty_dict['frames_total'] = count
     cv2.destroyAllWindows()
     fvs.stop()
+    return qty_dict
 
 
 gd = GDriveFolder("1AbWZDZI-4VHyKaCtoJolzy5QxQgylCRq")
@@ -48,10 +46,11 @@ for file in file_list:
     if tokens[len(tokens) - 1] == '22':
         print(f'{file_name}')
         gd.download_by_id(file['id'], data_path)
-        process_video(data_path, file['title'])
+        dict_to_json = process_video(data_path, file['title'])
         os.remove(data_path + file['title'])
+        with open('data.json', "a") as json_file:
+            json_file.write(',"' + file['title'] + '":')
+            json_file.write(json.dumps(dict_to_json, indent=4))
         break
 
-with open('data.json', 'w', encoding='utf-8') as f:
-    json.dump(json_data, f, ensure_ascii=False, indent=4)
 print("done")
