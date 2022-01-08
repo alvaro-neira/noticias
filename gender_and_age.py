@@ -13,7 +13,7 @@ class GenderAndAge(DnnModel):
         self.face_model = path_slash + "opencv_face_detector_uint8.pb"
         self.gender_proto = path_slash + "gender_deploy.prototxt"
         self.gender_model = path_slash + "gender_net.caffemodel"
-        self.face_net = cv2.dnn.readNet(self.face_model, self.face_proto)
+        self.face_net = cv2.dnn.readNetFromTensorflow(self.face_model, self.face_proto)
         self.gender_net = cv2.dnn.readNet(self.gender_model, self.gender_proto)
         self.gender_model_mean_values = (78.4263377603, 87.7689143744, 114.895847746)  # Where are these from?
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated

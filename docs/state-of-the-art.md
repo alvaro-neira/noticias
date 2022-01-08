@@ -14,3 +14,10 @@
 Se inicia con la red preentrenada de Sankaranayanan et al. (2016) para reconocimiento facial como backbone. Consiste en 7 capas convolucionales y 3 capas fully connected.
 Las 6 primeras capas convolucionales se utilizan para entrenar otras tareas, las que se dividen en 2 grupos: independientes (detección, visibilidad, keypoints, etc) y dependientes (género, edad) del sujeto.
 
+Yolo Face Detection
+Arquitectura Yolo aplicada para detectar rostro y género (además de otras características).
+
+Pesos pre-entrenados disponibles en:
+https://github.com/grausof/YoloKerasFaceDetection
+https://github.com/OValery16/gender-age-classification
+

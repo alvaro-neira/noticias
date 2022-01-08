@@ -10,6 +10,9 @@ class GDriveFolder:
     folder_id = None
     google_drive = None
     base_path = '/Users/aneira/noticias'
+    folder_24 = '1AbWZDZI-4VHyKaCtoJolzy5QxQgylCRq'
+    test_upload = '1cdm7j1VkdIim6GtjZIon34vMq5ahrg3v'
+    folder_img = '1NtzF1O78ZESJdaMPAVw4GYeCBK0kUZx3'
 
     def __init__(self, folder_id):
         self.folder_id = folder_id
@@ -53,6 +56,7 @@ class GDriveFolder:
         file1.SetContentFile(file_path)
         file1.Upload()  # Upload the file.
         print('Created file %s with mimeType %s' % (file1['title'], file1['mimeType']))
+        return file1['id']
 
     @staticmethod
     def get_mime_type(file_name):
