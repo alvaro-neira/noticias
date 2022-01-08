@@ -7,7 +7,7 @@ from imutils.video import FileVideoStream
 import time
 from google_drive.gdrive_folder import GDriveFolder
 
-n_samples = 5
+n_samples = 20
 gd = GDriveFolder(GDriveFolder.folder_24)
 gd.oauth2_connect()
 file_list = gd.ls(do_print=False)
@@ -46,6 +46,6 @@ with open(data_folder + 'images.csv', 'w', encoding='UTF8', newline='') as csv_f
         id_str = gd2.upload(f"{data_folder}{base_name}_frame_{count}.png")
         os.remove(f"{data_folder}{base_name}_frame_{count}.png")
         os.remove(f"{data_folder}{file_name}")
-        link_str = f"'https://drive.google.com/file/d/{id_str}/view?usp=sharing'"
+        link_str = f"https://drive.google.com/file/d/{id_str}/view?usp=sharing"
         writer.writerow([file_name, count, 0, 0, '', 1, '', link_str])
 print("done")
