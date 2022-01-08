@@ -21,7 +21,10 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.summary import summary
 
 # Silence TensorFlow messages
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
+
+tf.debugging.experimental.enable_dump_debug_info('/Users/aneira/noticias/logs', tensor_debug_mode="FULL_HEALTH",
+                                                 circular_buffer_size=-1)
 
 
 def import_to_tensorboard(model_dir, log_dir):
@@ -39,6 +42,8 @@ def import_to_tensorboard(model_dir, log_dir):
             graph_def = graph_pb2.GraphDef()
             graph_def.ParseFromString(f.read())
             importer.import_graph_def(graph_def)
+            for node in graph_def.node:
+                print (node)
 
         pb_visual_writer = summary.FileWriter(log_dir)
         pb_visual_writer.add_graph(sess.graph)
