@@ -143,3 +143,6 @@ class GenderAndAge(DnnModel):
                         (0, 255, 255), 2, cv2.LINE_AA)
 
         return str(f) + "f-" + str(m) + "m", result_img
+
+    def set_hyperparameter(self, key, value):
+        self.hyperparameters[key] = value
