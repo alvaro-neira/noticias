@@ -38,11 +38,13 @@ class GDriveFolder:
             f.close()
         print("oauth2 done")
 
-    def ls(self):
+    def ls(self, do_print=True):
         file_list = self.google_drive.ListFile({'q': "'" + self.folder_id + "' in parents and trashed=false"}).GetList()
         file_list.sort(key=lambda elem: elem['title'], reverse=True)
-        for file in file_list:
-            print(f"{file['title']},{file['fileSize']}")
+        if do_print:
+            for file in file_list:
+                print(f"{file['title']},{file['fileSize']}")
+        return file_list
 
     def upload(self, file_path):
         file1 = self.google_drive.CreateFile(
@@ -79,6 +81,20 @@ class GDriveFolder:
         file_id = self.get_by_title(file_list, name_string)
         if file_id is None:
             print(f"'{name_string}' not found")
+            return
+        file_to_download = self.google_drive.CreateFile({'id': file_id})
+        file_to_download.GetContentFile(file_to_download['title'])
+        path_slash = path.strip()
+        if path_slash[-1:] != "/":
+            path_slash = path_slash + "/"
+        os.rename(file_to_download['title'], path_slash + file_to_download['title'])
+
+    def download_by_id(self, file_id, path):
+        if not os.path.isdir(path):
+            print(f"'{path}' does not exist or not a folder")
+            return
+        if file_id is None:
+            print(f"File ID '{file_id}' not found")
             return
         file_to_download = self.google_drive.CreateFile({'id': file_id})
         file_to_download.GetContentFile(file_to_download['title'])
