@@ -51,6 +51,5 @@ for file in file_list:
         with open('data.json', "a") as json_file:
             json_file.write(',"' + file['title'] + '":')
             json_file.write(json.dumps(dict_to_json, indent=4))
-        break
 
 print("done")
