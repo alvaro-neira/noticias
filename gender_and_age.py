@@ -113,3 +113,33 @@ class GenderAndAge(DnnModel):
                 cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_processed.png', result_img,
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
         return str(f) + "f-" + str(m) + "m"
+
+    def detect_for_colab(self, frame):
+        result_img, face_boxes = self.__highlight_face(frame)
+        if not face_boxes:
+            return '0f-0m', frame
+        f = 0
+        m = 0
+        for face_box in face_boxes:
+            # TODO: clarify this instruction
+            face = frame[max(0, face_box[1] - self.padding):
+                         min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
+                                                                              :min(face_box[2] + self.padding,
+                                                                                   frame.shape[1] - 1)]
+            try:
+                blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
+            except Exception as e:
+                print("ERROR in blob = cv2.dnn.blobFromImage(): " + e.msg)
+                return '0f-0m', frame
+            self.gender_net.setInput(blob)
+            gender_preds = self.gender_net.forward()
+            gender = self.gender_list[gender_preds[0].argmax()]
+            if gender == 'f':
+                f = f + 1
+            elif gender == 'm':
+                m = m + 1
+
+            cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+                        (0, 255, 255), 2, cv2.LINE_AA)
+
+        return str(f) + "f-" + str(m) + "m", result_img
