@@ -19,7 +19,7 @@ class GenderAndAge(DnnModel):
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
         self.face_model_mean_values = [104, 117, 123]
         self.padding = 20  # Where are this from?
-        self.gender_list = ['M', 'F']
+        self.gender_list = ['m', 'f']
 
     @staticmethod
     def __save_blob(blob_local, full_path_png):
@@ -67,8 +67,11 @@ class GenderAndAge(DnnModel):
                          min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
                                                                               :min(face_box[2] + self.padding,
                                                                                    frame.shape[1] - 1)]
-
-            blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
+            try:
+                blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
+            except Exception as e:
+                print("ERROR in blob = cv2.dnn.blobFromImage(): " + e.msg)
+                return '0f-0m'
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
             gender = self.gender_list[gender_preds[0].argmax()]
@@ -78,3 +81,35 @@ class GenderAndAge(DnnModel):
                         (0, 255, 255), 2, cv2.LINE_AA)
             cv2.imwrite(f'/Users/aneira/noticias/data/{file_name}_processed.png', result_img,
                         [cv2.IMWRITE_PNG_COMPRESSION, 0])
+
+    def detect_single_frame(self, frame, a_name=None):
+        result_img, face_boxes = self.__highlight_face(frame)
+        if not face_boxes:
+            return '0f-0m'
+        f = 0
+        m = 0
+        for face_box in face_boxes:
+            # TODO: clarify this instruction
+            face = frame[max(0, face_box[1] - self.padding):
+                         min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
+                                                                              :min(face_box[2] + self.padding,
+                                                                                   frame.shape[1] - 1)]
+            try:
+                blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
+            except Exception as e:
+                print("ERROR in blob = cv2.dnn.blobFromImage(): " + e.msg)
+                return '0f-0m'
+            self.gender_net.setInput(blob)
+            gender_preds = self.gender_net.forward()
+            gender = self.gender_list[gender_preds[0].argmax()]
+            if gender == 'f':
+                f = f + 1
+            elif gender == 'm':
+                m = m + 1
+
+            if a_name is not None:
+                cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+                            (0, 255, 255), 2, cv2.LINE_AA)
+                cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_processed.png', result_img,
+                            [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        return str(f) + "f-" + str(m) + "m"

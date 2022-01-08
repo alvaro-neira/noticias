@@ -5,3 +5,7 @@ class DnnModel(ABC):
     @abstractmethod
     def detect_single_image(self, img_path):
         pass
+
+    @abstractmethod
+    def detect_single_frame(self, frame, a_name):
+        pass
