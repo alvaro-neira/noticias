@@ -1,4 +1,4 @@
-#!/Library/Frameworks/Python.framework/Versions/3.9/bin/python3
+#!/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
 import sys
 import os
 from imutils.video import FileVideoStream
