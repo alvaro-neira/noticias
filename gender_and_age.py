@@ -5,7 +5,7 @@ from dnn_model import DnnModel
 
 class GenderAndAge(DnnModel):
     def __init__(self, weights_path):
-        self.hyperparameters = {'conf_threshold': 0.7}
+        self.hyperparameters = {'conf_threshold': 0.15}
         path_slash = weights_path.strip()
         if path_slash[-1:] != "/":
             path_slash = path_slash + "/"
@@ -35,7 +35,6 @@ class GenderAndAge(DnnModel):
         frame_height = frame_with_drown_squares.shape[0]
         frame_width = frame_with_drown_squares.shape[1]
         conf_threshold = self.hyperparameters['conf_threshold']
-
         blob_local = cv2.dnn.blobFromImage(frame_with_drown_squares, 1.0, (300, 300), self.face_model_mean_values, True,
                                            False)
         self.face_net.setInput(blob_local)
@@ -48,9 +47,10 @@ class GenderAndAge(DnnModel):
                 y1 = int(detections[0, 0, i, 4] * frame_height)
                 x2 = int(detections[0, 0, i, 5] * frame_width)
                 y2 = int(detections[0, 0, i, 6] * frame_height)
-                face_boxes_to_return.append([x1, y1, x2, y2])
-                cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0), int(round(frame_height / 150)),
-                              8)
+                if x1 <= frame_width and x2 <= frame_width and y1 <= frame_height and y2 <= frame_height:
+                    face_boxes_to_return.append([x1, y1, x2, y2])
+                    cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
+                                  int(round(frame_height / 150)), 8)
         return frame_with_drown_squares, face_boxes_to_return
 
     def detect_single_image(self, img_path):
@@ -58,6 +58,7 @@ class GenderAndAge(DnnModel):
         file_name, _ = os.path.splitext(basename)
         frame = cv2.imread(img_path)
         result_img, face_boxes = self.__highlight_face(frame)
+        i = 0
         if not face_boxes:
             print("No face detected")
             return
@@ -67,6 +68,9 @@ class GenderAndAge(DnnModel):
                          min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
                                                                               :min(face_box[2] + self.padding,
                                                                                    frame.shape[1] - 1)]
+            cv2.imwrite(f'/Users/aneira/noticias/data/face{i}.png', face,
+                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+            i = i + 1
             try:
                 blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             except Exception as e:
@@ -79,8 +83,8 @@ class GenderAndAge(DnnModel):
 
             cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
-            cv2.imwrite(f'/Users/aneira/noticias/data/{file_name}_processed.png', result_img,
-                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        cv2.imwrite(f'/Users/aneira/noticias/data/{file_name}_processed.png', result_img,
+                    [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
     def detect_single_frame(self, frame, a_name=None):
         result_img, face_boxes = self.__highlight_face(frame)
