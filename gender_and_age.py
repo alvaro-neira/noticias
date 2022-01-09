@@ -1,5 +1,6 @@
 import cv2
 import os
+import csv
 from dnn_model import DnnModel
 
 
@@ -27,7 +28,7 @@ class GenderAndAge(DnnModel):
         print(blob_to_save.shape)
         cv2.imwrite(full_path_png, blob_to_save, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
-    def __highlight_face(self, the_frame):
+    def __highlight_face(self, the_frame, a_name):
         """
         This function is used only to detect faces (not gender)
         """
@@ -40,18 +41,20 @@ class GenderAndAge(DnnModel):
         self.face_net.setInput(blob_local)
         detections = self.face_net.forward()
         face_boxes_to_return = []
+        csv_rows = []
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
+            x1 = int(detections[0, 0, i, 3] * frame_width)
+            y1 = int(detections[0, 0, i, 4] * frame_height)
+            x2 = int(detections[0, 0, i, 5] * frame_width)
+            y2 = int(detections[0, 0, i, 6] * frame_height)
+            csv_rows.append([a_name, confidence, x1, y1, x2, y2])
             if confidence > conf_threshold:
-                x1 = int(detections[0, 0, i, 3] * frame_width)
-                y1 = int(detections[0, 0, i, 4] * frame_height)
-                x2 = int(detections[0, 0, i, 5] * frame_width)
-                y2 = int(detections[0, 0, i, 6] * frame_height)
                 if x1 <= frame_width and x2 <= frame_width and y1 <= frame_height and y2 <= frame_height:
                     face_boxes_to_return.append([x1, y1, x2, y2])
                     cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
                                   int(round(frame_height / 150)), 8)
-        return frame_with_drown_squares, face_boxes_to_return
+        return frame_with_drown_squares, face_boxes_to_return, csv_rows
 
     def detect_single_image(self, img_path):
         basename = os.path.basename(img_path)
@@ -118,8 +121,8 @@ class GenderAndAge(DnnModel):
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
         return str(f) + "f-" + str(m) + "m"
 
-    def detect_for_colab(self, frame):
-        result_img, face_boxes = self.__highlight_face(frame)
+    def detect_for_colab(self, frame, a_name):
+        result_img, face_boxes = self.__highlight_face(frame, a_name)
         if not face_boxes:
             return '0f-0m', frame
         f = 0
