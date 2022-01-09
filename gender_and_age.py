@@ -122,9 +122,9 @@ class GenderAndAge(DnnModel):
         return str(f) + "f-" + str(m) + "m"
 
     def detect_for_colab(self, frame, a_name):
-        result_img, face_boxes = self.__highlight_face(frame, a_name)
+        result_img, face_boxes, csv_rows = self.__highlight_face(frame, a_name)
         if not face_boxes:
-            return '0f-0m', frame
+            return '0f-0m', frame, csv_rows
         f = 0
         m = 0
         for face_box in face_boxes:
@@ -137,7 +137,7 @@ class GenderAndAge(DnnModel):
                 blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             except Exception as e:
                 print("ERROR in blob = cv2.dnn.blobFromImage(): " + e.msg)
-                return '0f-0m', frame
+                return '0f-0m', frame, csv_rows
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
             gender = self.gender_list[gender_preds[0].argmax()]
@@ -149,7 +149,7 @@ class GenderAndAge(DnnModel):
             cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
 
-        return str(f) + "f-" + str(m) + "m", result_img
+        return str(f) + "f-" + str(m) + "m", result_img, csv_rows
 
     def set_hyperparameter(self, key, value):
         self.hyperparameters[key] = value
