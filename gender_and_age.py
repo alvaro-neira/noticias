@@ -1,6 +1,5 @@
 import cv2
 import os
-import csv
 from dnn_model import DnnModel
 
 
@@ -28,7 +27,7 @@ class GenderAndAge(DnnModel):
         print(blob_to_save.shape)
         cv2.imwrite(full_path_png, blob_to_save, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
-    def __highlight_face(self, the_frame, a_name):
+    def __highlight_face(self, the_frame):
         """
         This function is used only to detect faces (not gender)
         """
@@ -41,20 +40,18 @@ class GenderAndAge(DnnModel):
         self.face_net.setInput(blob_local)
         detections = self.face_net.forward()
         face_boxes_to_return = []
-        csv_rows = []
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
             x1 = int(detections[0, 0, i, 3] * frame_width)
             y1 = int(detections[0, 0, i, 4] * frame_height)
             x2 = int(detections[0, 0, i, 5] * frame_width)
             y2 = int(detections[0, 0, i, 6] * frame_height)
-            csv_rows.append([a_name, confidence, x1, y1, x2, y2])
-            if confidence > conf_threshold:
-                if x1 <= frame_width and x2 <= frame_width and y1 <= frame_height and y2 <= frame_height:
-                    face_boxes_to_return.append([x1, y1, x2, y2])
-                    cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
-                                  int(round(frame_height / 150)), 8)
-        return frame_with_drown_squares, face_boxes_to_return, csv_rows
+            if confidence > conf_threshold and x1 <= frame_width and x2 <= frame_width \
+                    and y1 <= frame_height and y2 <= frame_height:
+                face_boxes_to_return.append([x1, y1, x2, y2])
+                cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
+                              int(round(frame_height / 150)), 8)
+        return frame_with_drown_squares, face_boxes_to_return
 
     def detect_single_image(self, img_path):
         basename = os.path.basename(img_path)
@@ -121,10 +118,10 @@ class GenderAndAge(DnnModel):
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
         return str(f) + "f-" + str(m) + "m"
 
-    def detect_for_colab(self, frame, a_name):
-        result_img, face_boxes, csv_rows = self.__highlight_face(frame, a_name)
+    def detect_for_colab(self, frame):
+        result_img, face_boxes = self.__highlight_face(frame)
         if not face_boxes:
-            return '0f-0m', frame, csv_rows
+            return '0f-0m', frame
         f = 0
         m = 0
         for face_box in face_boxes:
@@ -133,11 +130,8 @@ class GenderAndAge(DnnModel):
                          min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
                                                                               :min(face_box[2] + self.padding,
                                                                                    frame.shape[1] - 1)]
-            try:
-                blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
-            except Exception as e:
-                print("ERROR in blob = cv2.dnn.blobFromImage(): " + e.msg)
-                return '0f-0m', frame, csv_rows
+
+            blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
             gender = self.gender_list[gender_preds[0].argmax()]
@@ -149,7 +143,7 @@ class GenderAndAge(DnnModel):
             cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
 
-        return str(f) + "f-" + str(m) + "m", result_img, csv_rows
+        return str(f) + "f-" + str(m) + "m", result_img
 
     def set_hyperparameter(self, key, value):
         self.hyperparameters[key] = value
