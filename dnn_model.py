@@ -11,5 +11,5 @@ class DnnModel(ABC):
         pass
 
     @abstractmethod
-    def detect_for_colab(self, frame):
+    def detect_for_colab(self, frame, a_name):
         pass
