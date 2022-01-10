@@ -68,8 +68,6 @@ class GenderAndAge(DnnModel):
             y_from = max(0, face_box[0] - self.padding)
             y_to = min(face_box[2] + self.padding, width - 1)
             face = frame[x_from:x_to, y_from:y_to]
-            if idx == 0:
-                cv2.imwrite(f'{a_name}_face1.png', face, [cv2.IMWRITE_PNG_COMPRESSION, 0])
             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
