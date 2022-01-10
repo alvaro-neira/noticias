@@ -1,5 +1,6 @@
 import cv2
 import os
+import numpy as np
 from dnn_model import DnnModel
 
 
@@ -79,6 +80,37 @@ class GenderAndAge(DnnModel):
                 cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_processed.png', result_img,
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
+    def detect_for_colab(self, frame):
+        result_img, face_boxes = self.__highlight_face(frame)
+        if not face_boxes:
+            return '0f-0m', frame
+        f = 0
+        m = 0
+        height = frame.shape[0]
+        width = frame.shape[1]
+        for idx, face_box in enumerate(face_boxes):
+            x_from = max(0, face_box[1] - self.padding)
+            x_to = min(face_box[3] + self.padding, height - 1)
+            y_from = max(0, face_box[0] - self.padding)
+            y_to = min(face_box[2] + self.padding, width - 1)
+            face = frame[x_from:x_to, y_from:y_to]
+            if idx == 0:
+                cv2.imwrite(f'face_{np.random.randint(1000000)}.png', face, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+
+            blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
+            self.gender_net.setInput(blob)
+            gender_preds = self.gender_net.forward()
+            gender = self.gender_list[gender_preds[0].argmax()]
+            if gender == 'f':
+                f = f + 1
+            elif gender == 'm':
+                m = m + 1
+
+            cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+                        (0, 255, 255), 2, cv2.LINE_AA)
+
+        return str(f) + "f-" + str(m) + "m", result_img
+
     def detect_single_image(self, img_path):
         basename = os.path.basename(img_path)
         file_name, _ = os.path.splitext(basename)
@@ -92,7 +124,6 @@ class GenderAndAge(DnnModel):
         f = 0
         m = 0
         for face_box in face_boxes:
-            # TODO: clarify this instruction
             face = frame[max(0, face_box[1] - self.padding):
                          min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
                                                                               :min(face_box[2] + self.padding,
@@ -112,33 +143,6 @@ class GenderAndAge(DnnModel):
                 cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_processed.png', result_img,
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
         return str(f) + "f-" + str(m) + "m"
-
-    def detect_for_colab(self, frame):
-        result_img, face_boxes = self.__highlight_face(frame)
-        if not face_boxes:
-            return '0f-0m', frame
-        f = 0
-        m = 0
-        for face_box in face_boxes:
-            # TODO: clarify this instruction
-            face = frame[max(0, face_box[1] - self.padding):
-                         min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
-                                                                              :min(face_box[2] + self.padding,
-                                                                                   frame.shape[1] - 1)]
-
-            blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
-            self.gender_net.setInput(blob)
-            gender_preds = self.gender_net.forward()
-            gender = self.gender_list[gender_preds[0].argmax()]
-            if gender == 'f':
-                f = f + 1
-            elif gender == 'm':
-                m = m + 1
-
-            cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                        (0, 255, 255), 2, cv2.LINE_AA)
-
-        return str(f) + "f-" + str(m) + "m", result_img
 
     def set_hyperparameter(self, key, value):
         self.hyperparameters[key] = value
