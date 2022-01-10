@@ -28,6 +28,45 @@ class GenderAndAge(DnnModel):
         print(blob_to_save.shape)
         cv2.imwrite(full_path_png, blob_to_save, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
+    def __get_all_bounding_boxes(self, the_frame):
+        frame_with_drown_squares = the_frame.copy()
+        frame_height = frame_with_drown_squares.shape[0]
+        frame_width = frame_with_drown_squares.shape[1]
+        blob_local = cv2.dnn.blobFromImage(frame_with_drown_squares, 1.0, (300, 300), self.face_model_mean_values, True,
+                                           False)
+        self.face_net.setInput(blob_local)
+        detections = self.face_net.forward()
+        face_boxes_to_return = []
+        for i in range(detections.shape[2]):
+            x1 = int(detections[0, 0, i, 3] * frame_width)
+            y1 = int(detections[0, 0, i, 4] * frame_height)
+            x2 = int(detections[0, 0, i, 5] * frame_width)
+            y2 = int(detections[0, 0, i, 6] * frame_height)
+            face_boxes_to_return.append([x1, y1, x2, y2])
+        return face_boxes_to_return
+
+    def get_all_bounding_boxes(self, frame, lower, upper):
+        result_img = frame.copy()
+        face_boxes = self.__get_all_bounding_boxes(result_img)
+        if not face_boxes:
+            return 0, frame
+        n_frames = 0
+        for idx, face_box in enumerate(face_boxes):
+            x1 = face_box[0]
+            y1 = face_box[1]
+            x2 = face_box[2]
+            y2 = face_box[3]
+            area = abs(x2 - x1) * abs(y2 - y1)
+            if area > upper or area < lower:
+                continue
+            n_frames = n_frames + 1
+            color = (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255))
+            cv2.rectangle(result_img, (x1, y1), (x2, y2), color, 1, 8)
+            cv2.putText(result_img, f'{area}', (x1, y2),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+                        color, 1, cv2.LINE_AA)
+        return n_frames, result_img
+
     def __highlight_face(self, the_frame):
         """
         This function is used only to detect faces (not gender)
