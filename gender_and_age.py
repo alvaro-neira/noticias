@@ -55,12 +55,19 @@ class GenderAndAge(DnnModel):
 
     def detect_single_frame(self, frame, a_name=None):
         result_img, face_boxes = self.__highlight_face(frame)
+        height = frame.shape[0]
+        width = frame.shape[1]
         if not face_boxes:
             return
-        for face_box in face_boxes:
-            face = frame[max(0, face_box[1] - self.padding):min(face_box[3] + self.padding, frame.shape[0] - 1),
-                   max(0, face_box[0] - self.padding):min(face_box[2] + self.padding,
-                                                          frame.shape[1] - 1)]
+        for idx, face_box in enumerate(face_boxes):
+            x_from = max(0, face_box[1] - self.padding)
+            x_to = min(face_box[3] + self.padding, height - 1)
+            y_from = max(0, face_box[0] - self.padding)
+            y_to = min(face_box[2] + self.padding, width - 1)
+            face = frame[x_from:x_to, y_from:y_to]
+            if idx == 0:
+                cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_first_face.png', face,
+                            [cv2.IMWRITE_PNG_COMPRESSION, 0])
             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
@@ -76,34 +83,7 @@ class GenderAndAge(DnnModel):
         basename = os.path.basename(img_path)
         file_name, _ = os.path.splitext(basename)
         frame = cv2.imread(img_path)
-        result_img, face_boxes = self.__highlight_face(frame)
-        i = 0
-        if not face_boxes:
-            print("No face detected")
-            return
-        for face_box in face_boxes:
-            # TODO: clarify this instruction
-            face = frame[max(0, face_box[1] - self.padding):
-                         min(face_box[3] + self.padding, frame.shape[0] - 1), max(0, face_box[0] - self.padding)
-                                                                              :min(face_box[2] + self.padding,
-                                                                                   frame.shape[1] - 1)]
-            cv2.imwrite(f'/Users/aneira/noticias/data/face{i}.png', face,
-                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
-            i = i + 1
-            try:
-                blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
-            except Exception as e:
-                print("ERROR in blob = cv2.dnn.blobFromImage(): " + e.msg)
-                return '0f-0m'
-            self.gender_net.setInput(blob)
-            gender_preds = self.gender_net.forward()
-            gender = self.gender_list[gender_preds[0].argmax()]
-            print(f'Gender: {gender}')
-
-            cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                        (0, 255, 255), 2, cv2.LINE_AA)
-        cv2.imwrite(f'/Users/aneira/noticias/data/{file_name}_processed.png', result_img,
-                    [cv2.IMWRITE_PNG_COMPRESSION, 0])
+        return self.detect_single_frame(frame, file_name)
 
     def detect_single_frame_counting(self, frame, a_name=None):
         result_img, face_boxes = self.__highlight_face(frame)
