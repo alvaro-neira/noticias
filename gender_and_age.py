@@ -19,7 +19,7 @@ class GenderAndAge(DnnModel):
         self.gender_model_mean_values = (78.4263377603, 87.7689143744, 114.895847746)  # Where are these from?
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
         self.face_model_mean_values = [104, 117, 123]
-        self.padding = 20  # Where are this from?
+        self.padding = 20  # Where is this from?
         self.gender_list = ['m', 'f']
 
     @staticmethod
@@ -160,3 +160,12 @@ class GenderAndAge(DnnModel):
 
     def set_hyperparameter(self, key, value):
         self.hyperparameters[key] = value
+
+    def get_hyperparameters(self):
+        return self.hyperparameters
+
+    def set_padding(self, value):
+        self.padding = value
+
+    def get_padding(self):
+        return self.padding
