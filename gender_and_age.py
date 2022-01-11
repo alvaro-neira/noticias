@@ -6,7 +6,7 @@ from dnn_model import DnnModel
 
 class GenderAndAge(DnnModel):
     def __init__(self, weights_path):
-        self.hyperparameters = {'conf_threshold': 0.7}
+        self.hyperparameters = {'conf_threshold': 0.15}
         path_slash = weights_path.strip()
         if path_slash[-1:] != "/":
             path_slash = path_slash + "/"
