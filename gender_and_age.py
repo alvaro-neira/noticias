@@ -110,6 +110,8 @@ class GenderAndAge(DnnModel):
             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
+            if gender_preds[0][0] + gender_preds[0][1] != 1.0:
+                print(f"distinct than sum zero {gender_preds[0]}")
             gender = self.gender_list[gender_preds[0].argmax()]
             if gender == 'f':
                 f = f + 1
