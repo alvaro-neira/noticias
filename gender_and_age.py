@@ -87,14 +87,12 @@ class GenderAndAge(DnnModel):
             y1 = int(detections[0, 0, i, 4] * frame_height)
             x2 = int(detections[0, 0, i, 5] * frame_width)
             y2 = int(detections[0, 0, i, 6] * frame_height)
-            if confidence > conf_threshold and x1 <= frame_width and x2 <= frame_width \
-                    and y1 <= frame_height and y2 <= frame_height:
+            if confidence > conf_threshold and x1 <= frame_width and x2 <= frame_width and y1 <= frame_height and y2 <= frame_height:
                 face_boxes_to_return.append([x1, y1, x2, y2])
                 cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
                               int(round(frame_height / 150)), 8)
         return frame_with_drown_squares, face_boxes_to_return
 
-    
     def detect_single_frame(self, frame, a_name=None):
         result_img, face_boxes = self.__highlight_face(frame)
         height = frame.shape[0]
@@ -158,8 +156,6 @@ class GenderAndAge(DnnModel):
                 cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_processed.png', result_img,
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
         return str(f) + "f-" + str(m) + "m"
-
-    
 
     def set_hyperparameter(self, key, value):
         self.hyperparameters[key] = value
