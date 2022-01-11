@@ -25,6 +25,8 @@ with open(data_folder + 'paula.csv', 'w', encoding='UTF8', newline='') as csv_fi
         frame = fvs.read()
         if frame is None:
             break
+        if count > 113400:
+            break
         if count % 300 == 0:
             cv2.imwrite(f"{data_folder}{base_name}_frame_{count}.png", frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
             gd2 = GDriveFolder(GDriveFolder.folder_img)
