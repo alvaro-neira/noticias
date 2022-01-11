@@ -1,3 +1,7 @@
 [submodule "Gender-and-Age-Detection"]
 	path = Gender-and-Age-Detection
 	url = https://github.com/alvaro-neira/Gender-and-Age-Detection.git
+[submodule "hyperface"]
+	path = hyperface
+	url = git@github.com:alvaro-neira/hyperface.git
+	branch = aneira
