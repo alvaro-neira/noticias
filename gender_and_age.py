@@ -115,7 +115,7 @@ class GenderAndAge(DnnModel):
                 f = f + 1
             elif gender == 'm':
                 m = m + 1
-            cv2.putText(result_img, f'{gender}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+            cv2.putText(result_img, f'{gender.upper()}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
 
         return str(f) + "f-" + str(m) + "m", result_img
