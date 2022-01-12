@@ -3,10 +3,12 @@ import os
 import numpy as np
 from dnn_model import DnnModel
 import chainer
+from hyperface.scripts.models import HyperFaceModel
+from hyperface.scripts.models import IMG_SIZE
 
 
-class HyperfaceFiltering(DnnModel):
-    def __init__(self, opencv_pbtxt_path, opencv_pb_path, hyperface_model_path):
+class HyperFaceFiltering(DnnModel):
+    def __init__(self, opencv_pbtxt_path, opencv_pb_path, hyperface_path):
         os.environ["CHAINER_TYPE_CHECK"] = "0"
         self.face_proto = opencv_pbtxt_path
         self.face_model = opencv_pb_path
@@ -14,10 +16,11 @@ class HyperfaceFiltering(DnnModel):
         self.padding = 20
         self.gender_list = ['M', 'F']
         self.hyperface_threshold = 0.004
-        self.hyperface_model = models.HyperFaceModel()
+        self.hyperface_model = HyperFaceModel()
         self.hyperface_model.train = False
         self.hyperface_model.report = False
         self.hyperface_model.backward = False
+        self.hyperface_model_path = hyperface_path
 
     @staticmethod
     def _cvt_variable(v):
@@ -76,28 +79,16 @@ class HyperfaceFiltering(DnnModel):
     def detect_single_image(self, img_path):
         pass
 
-    def detect_single_frame(self, frame, a_name):
-
-
-
+    def detect_single_frame(self, img, a_name=None):
         # Initialize model
-        chainer.serializers.load_npz(model_path, model)
+        chainer.serializers.load_npz(self.hyperface_model_path, self.hyperface_model )
 
-        # Setup GPU
-        if config.gpu >= 0:
-            chainer.cuda.check_cuda_available()
-            chainer.cuda.get_device(config.gpu).use()
-            model.to_gpu()
-            xp = chainer.cuda.cupy
-        else:
-            xp = np
+        xp = np
 
-        # Load image file
-        img = cv2.imread(img_path)
         if img is None or img.size == 0 or img.shape[0] == 0 or img.shape[1] == 0:
             exit()
         img = img.astype(np.float32) / 255.0  # [0:1]
-        img = cv2.resize(img, models.IMG_SIZE)
+        img = cv2.resize(img, IMG_SIZE)
         img = cv2.normalize(img, None, -0.5, 0.5, cv2.NORM_MINMAX)
         img = np.transpose(img, (2, 0, 1))
 
@@ -106,11 +97,11 @@ class HyperfaceFiltering(DnnModel):
         x = chainer.Variable(imgs)  # , volatile=True)
 
         # Forward
-        y = model(x)
+        y = self.hyperface_model(x)
 
         # Chainer.Variable -> np.ndarray
-        detection = _cvt_variable(y['detection'])
-        genders = _cvt_variable(y['gender'])
+        detection = self._cvt_variable(y['detection'])
+        genders = self._cvt_variable(y['gender'])
 
         gender = genders[0]
 
