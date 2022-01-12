@@ -1,8 +1,8 @@
 from google_drive.gdrive_folder import GDriveFolder
 
-gd = GDriveFolder("1AbWZDZI-4VHyKaCtoJolzy5QxQgylCRq")
+gd = GDriveFolder(GDriveFolder.folder_24)
 
 gd.oauth2_connect()
-gd.download_by_name('tv24horas_2022_01_03_15.mp4', '/Users/aneira/noticias/data')
+gd.download_by_name('tv24horas_2021_11_26_22.mp4', '/Users/aneira/noticias/data')
 
 print("done")
