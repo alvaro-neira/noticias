@@ -13,14 +13,18 @@ class HyperFaceFiltering(DnnModel):
         self.face_proto = opencv_pbtxt_path
         self.face_model = opencv_pb_path
         self.face_net = cv2.dnn.readNetFromTensorflow(self.face_model, self.face_proto)
-        self.padding = 20
-        self.gender_list = ['M', 'F']
-        self.hyperface_threshold = 0.004
+        self.padding = 0
+        self.gender_list = ['m', 'f']
+        self.hyperface_threshold = 0.8
+        self.gaa_threshold = 0.5
         self.hyperface_model = HyperFaceModel()
         self.hyperface_model.train = False
         self.hyperface_model.report = False
         self.hyperface_model.backward = False
         self.hyperface_model_path = hyperface_path
+        self.face_model_mean_values = [104, 117, 123]
+        # Initialize model
+        chainer.serializers.load_npz(self.hyperface_model_path, self.hyperface_model)
 
     @staticmethod
     def _cvt_variable(v):
@@ -47,11 +51,12 @@ class HyperFaceFiltering(DnnModel):
         detections = self.face_net.forward()
         face_boxes_to_return = []
         for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
             x1 = int(detections[0, 0, i, 3] * frame_width)
             y1 = int(detections[0, 0, i, 4] * frame_height)
             x2 = int(detections[0, 0, i, 5] * frame_width)
             y2 = int(detections[0, 0, i, 6] * frame_height)
-            face_boxes_to_return.append([x1, y1, x2, y2])
+            face_boxes_to_return.append([x1, y1, x2, y2, confidence])
         return face_boxes_to_return
 
     def get_all_bounding_boxes(self, frame, lower, upper):
@@ -79,14 +84,48 @@ class HyperFaceFiltering(DnnModel):
     def detect_single_image(self, img_path):
         pass
 
-    def detect_single_frame(self, img, a_name=None):
-        # Initialize model
-        chainer.serializers.load_npz(self.hyperface_model_path, self.hyperface_model )
+    def detect_single_frame(self, frame, a_name=None):
+        result_img = frame.copy()
+        face_boxes = self.__get_all_bounding_boxes(result_img)
+        if not face_boxes:
+            return '0f-0m', frame
+        height = frame.shape[0]
+        width = frame.shape[1]
+        f = 0
+        m = 0
+        for idx, face_box in enumerate(face_boxes):
+            x_from = max(0, face_box[1] - self.padding)
+            x_to = min(face_box[3] + self.padding, height - 1)
+            y_from = max(0, face_box[0] - self.padding)
+            y_to = min(face_box[2] + self.padding, width - 1)
+            if x_from >= x_to or y_from >= y_to:
+                continue
+            face = frame[x_from:x_to, y_from:y_to]
+            p_detection, p_gender = self.is_face(face)
+            cv2.imwrite(f'/Users/aneira/noticias/data/det_{str(round(face_box[4] * 100.0, 2))}_{str(round(p_detection * 100.0, 2))}.png', face,
+                        [cv2.IMWRITE_PNG_COMPRESSION, 0])
+            if p_detection < self.hyperface_threshold:
+                continue
+            gender = 'f'
+            if p_gender <= 0.5:
+                gender = 'm'
+            if gender == 'f':
+                f = f + 1
+            elif gender == 'm':
+                m = m + 1
+            cv2.rectangle(result_img, (face_box[0], face_box[1]), (face_box[2], face_box[3]), (0, 255, 0),
+                          int(round(height / 150)), 8)
+            # cv2.putText(result_img, f'{gender.upper()}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+            #             (0, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(result_img, str(round(face_box[4] * 100.0, 2)), (face_box[0], face_box[3]),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+                        (0, 255, 255), 1, cv2.LINE_AA)
+        return str(f) + "f-" + str(m) + "m", result_img
+
+    def is_face(self, img):
 
         xp = np
 
-        if img is None or img.size == 0 or img.shape[0] == 0 or img.shape[1] == 0:
-            exit()
         img = img.astype(np.float32) / 255.0  # [0:1]
         img = cv2.resize(img, IMG_SIZE)
         img = cv2.normalize(img, None, -0.5, 0.5, cv2.NORM_MINMAX)
@@ -105,10 +144,7 @@ class HyperFaceFiltering(DnnModel):
 
         gender = genders[0]
 
-        if gender > 0.5:
-            return f"Female, detection={detection}"
-        else:
-            return f"Male, detection={detection}"
+        return detection[0], gender
 
     def detect_for_colab(self, frame, a_name):
         pass

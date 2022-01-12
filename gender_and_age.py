@@ -38,14 +38,15 @@ class GenderAndAge(DnnModel):
         detections = self.face_net.forward()
         face_boxes_to_return = []
         for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
             x1 = int(detections[0, 0, i, 3] * frame_width)
             y1 = int(detections[0, 0, i, 4] * frame_height)
             x2 = int(detections[0, 0, i, 5] * frame_width)
             y2 = int(detections[0, 0, i, 6] * frame_height)
-            face_boxes_to_return.append([x1, y1, x2, y2])
+            face_boxes_to_return.append([x1, y1, x2, y2, confidence])
         return face_boxes_to_return
 
-    def get_all_bounding_boxes(self, frame, lower, upper):
+    def get_all_bounding_boxes(self, frame):
         result_img = frame.copy()
         face_boxes = self.__get_all_bounding_boxes(result_img)
         if not face_boxes:
@@ -56,13 +57,10 @@ class GenderAndAge(DnnModel):
             y1 = face_box[1]
             x2 = face_box[2]
             y2 = face_box[3]
-            area = abs(x2 - x1) * abs(y2 - y1)
-            if area > upper or area < lower:
-                continue
             n_frames = n_frames + 1
             color = (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255))
             cv2.rectangle(result_img, (x1, y1), (x2, y2), color, 1, 8)
-            cv2.putText(result_img, f'{area}', (x1, y2),
+            cv2.putText(result_img, str(round(face_box[4] * 100.0, 2)), (x1, y2),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.3,
                         color, 1, cv2.LINE_AA)
         return n_frames, result_img
@@ -88,7 +86,7 @@ class GenderAndAge(DnnModel):
             y2 = int(detections[0, 0, i, 6] * frame_height)
             if confidence > conf_threshold and x1 <= frame_width and x2 <= frame_width \
                     and y1 <= frame_height and y2 <= frame_height:
-                face_boxes_to_return.append([x1, y1, x2, y2])
+                face_boxes_to_return.append([x1, y1, x2, y2, confidence])
                 cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
                               int(round(frame_height / 150)), 8)
         return frame_with_drown_squares, face_boxes_to_return
