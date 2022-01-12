@@ -6,7 +6,7 @@ from dnn_model import DnnModel
 
 class GenderAndAge(DnnModel):
     def __init__(self, weights_path):
-        self.hyperparameters = {'conf_threshold': 0.15}
+        self.hyperparameters = {'conf_threshold': 0.5}
         path_slash = weights_path.strip()
         if path_slash[-1:] != "/":
             path_slash = path_slash + "/"
@@ -15,7 +15,7 @@ class GenderAndAge(DnnModel):
         self.gender_proto = path_slash + "gender_deploy.prototxt"
         self.gender_model = path_slash + "gender_net.caffemodel"
         self.face_net = cv2.dnn.readNetFromTensorflow(self.face_model, self.face_proto)
-        self.gender_net = cv2.dnn.readNet(self.gender_model, self.gender_proto)
+        self.gender_net = cv2.dnn.readNetFromCaffe(self.gender_proto, self.gender_model)
         self.gender_model_mean_values = (78.4263377603, 87.7689143744, 114.895847746)  # Where are these from?
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
         self.face_model_mean_values = [104, 117, 123]
@@ -110,8 +110,6 @@ class GenderAndAge(DnnModel):
             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
-            if gender_preds[0][0] + gender_preds[0][1] != 1.0:
-                print(f"distinct than sum zero {gender_preds[0]}")
             gender = self.gender_list[gender_preds[0].argmax()]
             if gender == 'f':
                 f = f + 1
