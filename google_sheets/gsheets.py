@@ -1,11 +1,3 @@
-import json
-import os
-from json import JSONDecodeError
-
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
-
-
 class GSheets:
     ascii_pos = 64
 
@@ -15,6 +7,9 @@ class GSheets:
 
     @staticmethod
     def change_base_excel(n):
+        if n < 1 or n >= 26:
+            print("Not implemented yet")
+            return "A"
         base = 26
         rem = n % base
         ret_val = "" + GSheets.__number2excel(rem, base);

@@ -3,6 +3,7 @@ node_modules
 *.json
 __pycache__
 *.csv
+*.pth
 frame_*.png
 tv24horas_*.mp4
 tv24horas_*.png

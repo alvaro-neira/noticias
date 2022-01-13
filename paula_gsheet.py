@@ -18,7 +18,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('/Users/aneira/noticias
 # authorize the clientsheet
 gc = gspread.authorize(creds)
 worksheet = gc.open('Copy of Etiquetado-Paula')
-sheet_instance = worksheet.worksheet("2021-11-26-22 (0.3)")
+sheet_instance = worksheet.worksheet("2021-11-26-22 (0.5,0.7)")
 
 gaa = GenderAndAge('/Users/aneira/noticias/Gender-and-Age-Detection')
 
@@ -42,10 +42,8 @@ while fvs.more():
     if count > 113400:
         break
     if count % 300 == 0:
-        print(f"frame {count}, sleeping 1")
+        print(f"frame {count}, sleeping 2")
         time.sleep(2)
-        cv2.imwrite(f'/Users/aneira/noticias/data/{base_name}_{count}.png', frame,
-                    [cv2.IMWRITE_PNG_COMPRESSION, 0])
         sheet_row = sheet_row + 1
 
         cell_list = sheet_instance.range(f'{letter1}{sheet_row}:{letter2}{sheet_row}')
@@ -53,7 +51,7 @@ while fvs.more():
         # detecciones
         for i in range(n_det):
             cell_list[i].value = ""
-        res_str, result_img = gaa.detect_single_frame(frame, f"{base_name}_{count}")
+        res_str, result_img = gaa.detect_single_frame(frame)
         if (res_str == '0f-0m' and sheet_instance.acell(letter1 + str(sheet_row - 1)).value.strip() == 'N'
                 and sheet_instance.acell(letter2 + str(sheet_row - 1)).value.strip() == '0'
                 and sheet_instance.acell(letter_total_M + str(sheet_row - 1)).value.strip() == '0'):
