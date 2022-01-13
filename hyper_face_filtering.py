@@ -15,7 +15,7 @@ class HyperFaceFiltering(DnnModel):
         self.face_net = cv2.dnn.readNetFromTensorflow(self.face_model, self.face_proto)
         self.padding = 0
         self.gender_list = ['m', 'f']
-        self.hyperface_threshold = 0.8
+        self.hyperface_threshold = 0.5
         self.gaa_threshold = 0.5
         self.hyperface_model = HyperFaceModel()
         self.hyperface_model.train = False
