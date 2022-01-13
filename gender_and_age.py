@@ -6,7 +6,7 @@ from dnn_model import DnnModel
 
 class GenderAndAge(DnnModel):
     def __init__(self, weights_path):
-        self.hyperparameters = {'conf_threshold': 0.3}
+        self.hyperparameters = {'conf_threshold': 0.5, 'gender_threshold': 0.5}
         path_slash = weights_path.strip()
         if path_slash[-1:] != "/":
             path_slash = path_slash + "/"
@@ -67,7 +67,7 @@ class GenderAndAge(DnnModel):
                         color, 1, cv2.LINE_AA)
         return n_frames, result_img
 
-    def __highlight_face(self, the_frame):
+    def __highlight_face(self, the_frame, a_name=None):
         """
         This function is used only to detect faces (not gender)
         """
@@ -94,7 +94,7 @@ class GenderAndAge(DnnModel):
         return frame_with_drown_squares, face_boxes_to_return
 
     def detect_single_frame(self, frame, a_name=None):
-        result_img, face_boxes = self.__highlight_face(frame)
+        result_img, face_boxes = self.__highlight_face(frame, a_name)
         height = frame.shape[0]
         width = frame.shape[1]
         if not face_boxes:
@@ -110,10 +110,11 @@ class GenderAndAge(DnnModel):
             blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
             self.gender_net.setInput(blob)
             gender_preds = self.gender_net.forward()
-            gender = self.gender_list[gender_preds[0].argmax()]
-            if gender == 'f':
+            if gender_preds[0][1] > self.hyperparameters['gender_threshold']:
+                gender = 'f'
                 f = f + 1
-            elif gender == 'm':
+            else:
+                gender = 'm'
                 m = m + 1
             cv2.putText(result_img, f'{gender.upper()}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                         (0, 255, 255), 2, cv2.LINE_AA)
@@ -152,7 +153,8 @@ class GenderAndAge(DnnModel):
             elif gender == 'm':
                 m = m + 1
             if a_name is not None:
-                cv2.putText(result_img, f'{gender.upper()}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+                cv2.putText(result_img, f'{gender.upper()}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.8,
                             (0, 255, 255), 2, cv2.LINE_AA)
                 cv2.imwrite(f'/Users/aneira/noticias/data/{a_name}_processed.png', result_img,
                             [cv2.IMWRITE_PNG_COMPRESSION, 0])
