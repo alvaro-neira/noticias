@@ -1,18 +1,23 @@
 from imutils.video import FileVideoStream
 from imutils.video import FPS
-import numpy as np
-import imutils
 import time
 import cv2
-from gender_and_age import GenderAndAge
+
+from hyper_face_classifier import HyperFaceClassifier
 
 data_path = '/Users/aneira/noticias/data/'
-gaa = GenderAndAge('/Users/aneira/noticias/Gender-and-Age-Detection')
+
+hfc = HyperFaceClassifier('/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector_uint8.pb',
+                          '/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector.pbtxt',
+                          '/Users/aneira/hyperface/model_epoch_190',
+                          360,
+                          640,
+                          17)
 
 
 def process_frame(numpy_frame, counter):
     print(f"counter={counter}")
-    _, result_img = gaa.detect_single_frame(numpy_frame)
+    _, result_img = hfc.detect_single_frame(numpy_frame)
     final_frame = cv2.hconcat((numpy_frame, result_img))
     file_name = "{:05d}".format(counter)
     cv2.imwrite(f'{data_path}/frames/{file_name}.png', final_frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])

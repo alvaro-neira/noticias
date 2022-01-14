@@ -8,7 +8,8 @@ hfc = HyperFaceClassifier('/Users/aneira/noticias/Gender-and-Age-Detection/openc
                           '/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector.pbtxt',
                           '/Users/aneira/hyperface/model_epoch_190',
                           360,
-                          640)
+                          640,
+                          17)
 basename = os.path.basename(img_path)
 file_name, _ = os.path.splitext(basename)
 frame = cv2.imread(img_path)

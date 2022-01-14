@@ -1,16 +1,16 @@
+import random
 import cv2
 import os
 import numpy as np
 from dnn_model import DnnModel
 import chainer
-# from hyperface.scripts.models import HyperFaceModel
-# from hyperface.scripts.models import IMG_SIZE
 from hyperface.scripts import models
-from hyperface.scripts.drawing import draw_gender
+from hyperface.scripts.drawing import draw_gender, draw_detection_in_orig
 
 
 class HyperFaceClassifier(DnnModel):
-    def __init__(self, face_model, face_proto, hyperface_pre_trained, height, width):
+    def __init__(self, face_model, face_proto, hyperface_pre_trained, height, width, random_seed):
+        random.seed(random_seed)
         self.hyperparameters = {'conf_threshold': 0.5, 'gender_threshold': 0.5}
         self.face_net = cv2.dnn.readNetFromTensorflow(face_model, face_proto)
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
@@ -75,12 +75,22 @@ class HyperFaceClassifier(DnnModel):
         detection = (detection > 0.5)
         gender = (gender > self.hyperparameters['gender_threshold'])
 
-        # # Draw results
-        # draw_detection(frame, detection)
+        # Draw results
+        total_height = final_scene.shape[0]
+        total_width = final_scene.shape[1]
+        x1 = face_box[0]
+        y1 = face_box[1]
+        x2 = face_box[2]
+        y2 = face_box[3]
+        height = y2 - y1
+        width = x2 - x1
+        scale = 2 * width / total_width
+
+        draw_detection_in_orig(detection, final_scene, face_box, scale)
         # landmark_color = (0, 1, 0) if detection == 1 else (0, 0, 1)
         # draw_landmark(frame, landmark, visibility, landmark_color, 0.5)
         # draw_pose(frame, pose)
-        draw_gender(frame, gender, final_scene, face_box)
+        draw_gender(gender, final_scene, face_box, scale)
         # return 255 * cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA)
         return gender
 

@@ -17,8 +17,8 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('/Users/aneira/noticias
                                                          scope)
 # authorize the clientsheet
 gc = gspread.authorize(creds)
-worksheet = gc.open('Copy of Etiquetado-Paula')
-sheet_instance = worksheet.worksheet("2021-11-26-22 hf1 (0.5,0.5)")
+worksheet = gc.open('Hyperface estudio')
+sheet_instance = worksheet.worksheet("2021-11-26-22 hf1 (gender=0.5,bb=0.15)")
 
 hfc = HyperFaceClassifier('/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector_uint8.pb',
                           '/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector.pbtxt',
@@ -53,7 +53,7 @@ while fvs.more():
         # detecciones
         for i in range(n_det):
             cell_list[i].value = ""
-        res_str, result_img = hfc.detect_single_frame(frame)
+        res_str,_ = hfc.detect_single_frame(frame)
         if (res_str == '0f-0m' and sheet_instance.acell(letter1 + str(sheet_row - 1)).value.strip() == 'N'
                 and sheet_instance.acell(letter2 + str(sheet_row - 1)).value.strip() == '0'
                 and sheet_instance.acell(letter_total_M + str(sheet_row - 1)).value.strip() == '0'):
@@ -67,8 +67,6 @@ while fvs.more():
         cell_list[n_det + 1].value = f
 
         sheet_instance.update_cells(cell_list)
-        cv2.imwrite(f'/Users/aneira/noticias/data/{base_name}_{count}_processed.png', result_img,
-                    [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
         sheet_row = sheet_row + 1
 
