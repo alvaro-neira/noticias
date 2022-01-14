@@ -17,13 +17,13 @@ creds = ServiceAccountCredentials.from_json_keyfile_name('/Users/aneira/noticias
                                                          scope)
 # authorize the clientsheet
 gc = gspread.authorize(creds)
-worksheet = gc.open('Copy of Etiquetado-Paula')
-sheet_instance = worksheet.worksheet("2021-11-26-22 (0.5,0.7)")
+worksheet = gc.open('Hyperface estudio')
+sheet_instance = worksheet.worksheet("2021-12-13-21 hf1 (gender=0.5,bb=0.15)")
 
 gaa = GenderAndAge('/Users/aneira/noticias/Gender-and-Age-Detection')
 
-video_file = 'tv24horas_2021_11_26_22.mp4'
-n_det = 9
+video_file = 'tv24horas_2021_12_13_21.mp4'
+n_det = 5
 data_folder = '/Users/aneira/noticias/data/'
 base_name, _ = os.path.splitext(video_file)
 fvs = FileVideoStream(data_folder + video_file).start()
