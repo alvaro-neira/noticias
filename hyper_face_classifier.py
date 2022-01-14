@@ -6,16 +6,19 @@ import chainer
 # from hyperface.scripts.models import HyperFaceModel
 # from hyperface.scripts.models import IMG_SIZE
 from hyperface.scripts import models
+from hyperface.scripts.drawing import draw_gender
 
 
 class HyperFaceClassifier(DnnModel):
-    def __init__(self, face_model, face_proto, hyperface_pre_trained):
+    def __init__(self, face_model, face_proto, hyperface_pre_trained, height, width):
         self.hyperparameters = {'conf_threshold': 0.5, 'gender_threshold': 0.5}
         self.face_net = cv2.dnn.readNetFromTensorflow(face_model, face_proto)
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
         self.face_model_mean_values = [104, 117, 123]
         self.padding = 20  # Where is this from?
         self.gender_list = ['m', 'f']
+        self.frame_height = height
+        self.frame_width = width
 
         # Disable type check in chainer
         os.environ["CHAINER_TYPE_CHECK"] = "0"
@@ -36,7 +39,7 @@ class HyperFaceClassifier(DnnModel):
                 v = v.get()
         return v
 
-    def get_gender(self, img):
+    def get_gender_and_draw(self, img, final_scene, face_box):
 
         frame = img.copy()
         frame = frame.astype(np.float32) / 255.0  # [0:1]
@@ -51,34 +54,35 @@ class HyperFaceClassifier(DnnModel):
         y = self.hyperface_model(x)
 
         # Chainer.Variable -> np.ndarray
-        # imgs = _cvt_variable(y['img'])
-        # detections = _cvt_variable(y['detection'])
-        # landmarks = _cvt_variable(y['landmark'])
-        # visibilities = _cvt_variable(y['visibility'])
-        # poses = _cvt_variable(y['pose'])
+        imgs = HyperFaceClassifier._cvt_variable(y['img'])
+        detections = HyperFaceClassifier._cvt_variable(y['detection'])
+        landmarks = HyperFaceClassifier._cvt_variable(y['landmark'])
+        visibilities = HyperFaceClassifier._cvt_variable(y['visibility'])
+        poses = HyperFaceClassifier._cvt_variable(y['pose'])
         genders = HyperFaceClassifier._cvt_variable(y['gender'])
 
         # Use first data in one batch
-        # frame = imgs[0]
-        # detection = detections[0]
-        # landmark = landmarks[0]
-        # visibility = visibilities[0]
-        # pose = poses[0]
+        frame = imgs[0]
+        detection = detections[0]
+        landmark = landmarks[0]
+        visibility = visibilities[0]
+        pose = poses[0]
         gender = genders[0]
 
-        # frame = np.transpose(frame, (1, 2, 0))
-        # frame = frame.copy()
-        # frame += 0.5  # [-0.5:0.5] -> [0:1]
-        # detection = (detection > 0.5)
-        return gender
+        frame = np.transpose(frame, (1, 2, 0))
+        frame = frame.copy()
+        frame += 0.5  # [-0.5:0.5] -> [0:1]
+        detection = (detection > 0.5)
+        gender = (gender > self.hyperparameters['gender_threshold'])
 
         # # Draw results
         # draw_detection(frame, detection)
         # landmark_color = (0, 1, 0) if detection == 1 else (0, 0, 1)
         # draw_landmark(frame, landmark, visibility, landmark_color, 0.5)
         # draw_pose(frame, pose)
-        # draw_gender(frame, gender)
+        draw_gender(frame, gender, final_scene, face_box)
         # return 255 * cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA)
+        return gender
 
     @staticmethod
     def __save_blob(blob_local, full_path_png):
@@ -130,8 +134,7 @@ class HyperFaceClassifier(DnnModel):
         This function is used only to detect faces (not gender)
         """
         frame_with_drown_squares = the_frame.copy()
-        frame_height = frame_with_drown_squares.shape[0]
-        frame_width = frame_with_drown_squares.shape[1]
+
         conf_threshold = self.hyperparameters['conf_threshold']
         blob_local = cv2.dnn.blobFromImage(frame_with_drown_squares, 1.0, (300, 300), self.face_model_mean_values, True,
                                            False)
@@ -140,14 +143,13 @@ class HyperFaceClassifier(DnnModel):
         face_boxes_to_return = []
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
-            x1 = int(detections[0, 0, i, 3] * frame_width)
-            y1 = int(detections[0, 0, i, 4] * frame_height)
-            x2 = int(detections[0, 0, i, 5] * frame_width)
-            y2 = int(detections[0, 0, i, 6] * frame_height)
-            if confidence > conf_threshold and x1 <= frame_width and x2 <= frame_width and y1 <= frame_height and y2 <= frame_height:
+            x1 = int(detections[0, 0, i, 3] * self.frame_width)
+            y1 = int(detections[0, 0, i, 4] * self.frame_height)
+            x2 = int(detections[0, 0, i, 5] * self.frame_width)
+            y2 = int(detections[0, 0, i, 6] * self.frame_height)
+            if confidence > conf_threshold and x1 <= self.frame_width and x2 <= self.frame_width and y1 <= self.frame_height and y2 <= self.frame_height:
                 face_boxes_to_return.append([x1, y1, x2, y2])
-                cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 255, 0),
-                              int(round(frame_height / 150)), 8)
+                cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 0, 255), 2, 8)
         return frame_with_drown_squares, face_boxes_to_return
 
     def detect_single_frame(self, frame, a_name=None):
@@ -164,15 +166,12 @@ class HyperFaceClassifier(DnnModel):
             y_from = max(0, face_box[0] - self.padding)
             y_to = min(face_box[2] + self.padding, width - 1)
             face = frame[x_from:x_to, y_from:y_to]
-            gender_prob = self.get_gender(face)
-            if gender_prob > self.hyperparameters['gender_threshold']:
-                gender = 'f'
+            gender_bool = self.get_gender_and_draw(face, result_img, face_box)
+            if gender_bool:
                 f = f + 1
             else:
-                gender = 'm'
                 m = m + 1
-            cv2.putText(result_img, f'{gender.upper()}', (face_box[0], face_box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                        (0, 255, 255), 2, cv2.LINE_AA)
+
         return str(f) + "f-" + str(m) + "m", result_img
 
     def detect_for_colab(self, frame, a_name=None):
