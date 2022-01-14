@@ -2,25 +2,83 @@ import cv2
 import os
 import numpy as np
 from dnn_model import DnnModel
+import chainer
+# from hyperface.scripts.models import HyperFaceModel
+# from hyperface.scripts.models import IMG_SIZE
+from hyperface.scripts import models
 
 
-class GenderAndAge(DnnModel):
-    def __init__(self, weights_path):
+class HyperFaceClassifier(DnnModel):
+    def __init__(self, face_model, face_proto, hyperface_pre_trained):
         self.hyperparameters = {'conf_threshold': 0.5, 'gender_threshold': 0.5}
-        path_slash = weights_path.strip()
-        if path_slash[-1:] != "/":
-            path_slash = path_slash + "/"
-        self.face_proto = path_slash + "opencv_face_detector.pbtxt"
-        self.face_model = path_slash + "opencv_face_detector_uint8.pb"
-        self.gender_proto = path_slash + "gender_deploy.prototxt"
-        self.gender_model = path_slash + "gender_net.caffemodel"
-        self.face_net = cv2.dnn.readNetFromTensorflow(self.face_model, self.face_proto)
-        self.gender_net = cv2.dnn.readNetFromCaffe(self.gender_proto, self.gender_model)
-        self.gender_model_mean_values = (78.4263377603, 87.7689143744, 114.895847746)  # Where are these from?
+        self.face_net = cv2.dnn.readNetFromTensorflow(face_model, face_proto)
         # They say that a mean = [104, 117, 123] is a standard and doesn't need to be changed nor calculated
         self.face_model_mean_values = [104, 117, 123]
         self.padding = 20  # Where is this from?
         self.gender_list = ['m', 'f']
+
+        # Disable type check in chainer
+        os.environ["CHAINER_TYPE_CHECK"] = "0"
+        # Define a model
+        self.hyperface_model = models.HyperFaceModel()
+        self.hyperface_model.train = False
+        self.hyperface_model.report = False
+        self.hyperface_model.backward = False
+        # Initialize model
+        chainer.serializers.load_npz(hyperface_pre_trained, self.hyperface_model)
+
+    @staticmethod
+    def _cvt_variable(v):
+        # Convert from chainer variable
+        if isinstance(v, chainer.variable.Variable):
+            v = v.data
+            if hasattr(v, 'get'):
+                v = v.get()
+        return v
+
+    def get_gender(self, img):
+
+        frame = img.copy()
+        frame = frame.astype(np.float32) / 255.0  # [0:1]
+        frame = cv2.resize(frame, models.IMG_SIZE)
+        frame = cv2.normalize(frame, None, -0.5, 0.5, cv2.NORM_MINMAX)
+        frame = np.transpose(frame, (2, 0, 1))
+
+        # Create single batch
+        imgs = np.asarray([frame])
+        x = chainer.Variable(imgs)  # , volatile=True)
+
+        y = self.hyperface_model(x)
+
+        # Chainer.Variable -> np.ndarray
+        # imgs = _cvt_variable(y['img'])
+        # detections = _cvt_variable(y['detection'])
+        # landmarks = _cvt_variable(y['landmark'])
+        # visibilities = _cvt_variable(y['visibility'])
+        # poses = _cvt_variable(y['pose'])
+        genders = HyperFaceClassifier._cvt_variable(y['gender'])
+
+        # Use first data in one batch
+        # frame = imgs[0]
+        # detection = detections[0]
+        # landmark = landmarks[0]
+        # visibility = visibilities[0]
+        # pose = poses[0]
+        gender = genders[0]
+
+        # frame = np.transpose(frame, (1, 2, 0))
+        # frame = frame.copy()
+        # frame += 0.5  # [-0.5:0.5] -> [0:1]
+        # detection = (detection > 0.5)
+        return gender
+
+        # # Draw results
+        # draw_detection(frame, detection)
+        # landmark_color = (0, 1, 0) if detection == 1 else (0, 0, 1)
+        # draw_landmark(frame, landmark, visibility, landmark_color, 0.5)
+        # draw_pose(frame, pose)
+        # draw_gender(frame, gender)
+        # return 255 * cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA)
 
     @staticmethod
     def __save_blob(blob_local, full_path_png):
@@ -106,10 +164,8 @@ class GenderAndAge(DnnModel):
             y_from = max(0, face_box[0] - self.padding)
             y_to = min(face_box[2] + self.padding, width - 1)
             face = frame[x_from:x_to, y_from:y_to]
-            blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), self.gender_model_mean_values, swapRB=False)
-            self.gender_net.setInput(blob)
-            gender_preds = self.gender_net.forward()
-            if gender_preds[0][1] > self.hyperparameters['gender_threshold']:
+            gender_prob = self.get_gender(face)
+            if gender_prob > self.hyperparameters['gender_threshold']:
                 gender = 'f'
                 f = f + 1
             else:
