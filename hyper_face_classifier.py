@@ -162,7 +162,8 @@ class HyperFaceClassifier(DnnModel):
                 cv2.rectangle(frame_with_drown_squares, (x1, y1), (x2, y2), (0, 0, 255), 2, 8)
         return frame_with_drown_squares, face_boxes_to_return
 
-    def detect_single_frame(self, frame, a_name=None):
+    def detect_single_frame(self, frame, random_seed, a_name=None):
+        random.seed(random_seed)
         result_img, face_boxes = self.__highlight_face(frame, a_name)
         height = frame.shape[0]
         width = frame.shape[1]
