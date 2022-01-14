@@ -7,7 +7,7 @@ class DnnModel(ABC):
         pass
 
     @abstractmethod
-    def detect_single_frame(self, frame, a_name):
+    def detect_single_frame(self, frame, random_seed, a_name):
         pass
 
     @abstractmethod

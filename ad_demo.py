@@ -11,6 +11,9 @@ import torch.nn as nn
 import torchvision
 from torchvision import datasets, models, transforms
 
+from gender_and_age import GenderAndAge
+from hyper_face_classifier import HyperFaceClassifier
+
 data_path = '/Users/aneira/noticias/data/'
 
 random.seed(30)
@@ -72,25 +75,39 @@ model_ft.load_state_dict(torch.load("/Users/aneira/noticias/ad_detection/resnet1
                                     map_location=torch.device('cpu')))
 criterion = nn.CrossEntropyLoss()
 
+gaa = GenderAndAge('/Users/aneira/noticias/Gender-and-Age-Detection/')
+
+hfc = HyperFaceClassifier('/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector_uint8.pb',
+                          '/Users/aneira/noticias/Gender-and-Age-Detection/opencv_face_detector.pbtxt',
+                          '/Users/aneira/hyperface/model_epoch_190',
+                          360,
+                          640,
+                          17)
+
 
 def process_frame(numpy_frame, counter):
     print(f"counter={counter}")
     file_name = "{:05d}".format(counter)
     cv2.imwrite(f'{data_path}/frames/orig_{file_name}.png', numpy_frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
     result_local = evaluate_imagen(f'{data_path}/frames/orig_{file_name}.png', model_ft, criterion)
-    if result_local == 'Noticias':
+    if result_local != 'Noticias':
         result_img2 = cv2.cvtColor(cv2.imread(f'{data_path}/frames/orig_{file_name}.png'), cv2.COLOR_BGR2GRAY)
         cv2.imwrite(f'{data_path}/frames/bw_{file_name}.png', result_img2, [cv2.IMWRITE_PNG_COMPRESSION, 0])
-        result_img = cv2.imread(f'{data_path}/frames/bw_{file_name}.png')
+        result_news = cv2.imread(f'{data_path}/frames/bw_{file_name}.png')
     else:
-        result_img = numpy_frame.copy()
-
-    height = result_img.shape[0]
-    width = result_img.shape[1]
-    cv2.putText(result_img, result_local, (100, round(height / 2)),
+        result_news = numpy_frame.copy()
+    height = result_news.shape[0]
+    width = result_news.shape[1]
+    cv2.putText(result_news, result_local, (100, round(height / 2)),
                 cv2.FONT_HERSHEY_SIMPLEX, 2,
                 (255, 255, 255), 2, cv2.LINE_AA)
-    final_frame = cv2.hconcat((numpy_frame, result_img))
+    _, result_img = gaa.detect_single_frame(numpy_frame)
+    lower_row = cv2.hconcat((numpy_frame, result_img))
+
+    _, result_hfc = hfc.detect_single_frame(frame, 19, file_name)
+    upper_row = cv2.hconcat((result_news, result_hfc))
+
+    final_frame = cv2.vconcat((upper_row, lower_row))
     cv2.imwrite(f'{data_path}/frames/{file_name}.png', final_frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
     print(result_local)
     print('\n\n')
