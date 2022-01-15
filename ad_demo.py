@@ -87,7 +87,7 @@ hfc = HyperFaceClassifier('/Users/aneira/noticias/Gender-and-Age-Detection/openc
 
 def process_frame(numpy_frame, counter):
     print(f"counter={counter}")
-    file_name = "{:05d}".format(counter)
+    file_name = "{:06d}".format(counter)
     cv2.imwrite(f'{data_path}/frames/orig_{file_name}.png', numpy_frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
     result_local = evaluate_imagen(f'{data_path}/frames/orig_{file_name}.png', model_ft, criterion)
     if result_local != 'Noticias':
@@ -116,7 +116,7 @@ def process_frame(numpy_frame, counter):
 # start the file video stream thread and allow the buffer to
 # start to fill
 print("[INFO] starting video file thread...")
-fvs = FileVideoStream(data_path + "tv24horas_2021_11_26_22.mp4").start()
+fvs = FileVideoStream(data_path + "tv24horas_2021_12_13_21.mp4").start()
 time.sleep(1.0)
 
 # start the FPS timer
@@ -128,7 +128,7 @@ while fvs.more():
     frame = fvs.read()
     if frame is None:
         break
-    if count > 9000:
+    if count > 500000:
         break
     process_frame(frame, count)
     # There is no waitKey()

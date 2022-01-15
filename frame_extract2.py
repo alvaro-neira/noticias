@@ -9,15 +9,15 @@ import cv2
 
 
 def process_frame(numpy_frame, counter):
-    if counter % 60 == 0:
-        cv2.imshow("video", numpy_frame)
+    if counter == 15600 or counter == 15000 or counter == 15900:
+        # cv2.imshow("video", numpy_frame)
         cv2.imwrite("data/frame_{}.png".format(counter), numpy_frame, [cv2.IMWRITE_PNG_COMPRESSION, 0])
 
 
 # start the file video stream thread and allow the buffer to
 # start to fill
 print("[INFO] starting video file thread...")
-fvs = FileVideoStream('data/tv24horas_2022_01_03_15.mp4').start()
+fvs = FileVideoStream('data/tv24horas_2021_11_26_22.mp4').start()
 time.sleep(1.0)
 
 # start the FPS timer
@@ -30,6 +30,8 @@ while fvs.more():
     if frame is None:
         break
     process_frame(frame, count)
+    if count == 15900:
+        break
     # There is no waitKey()
     fps.update()
     count = count + 1
